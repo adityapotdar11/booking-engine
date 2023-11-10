@@ -1,0 +1,28 @@
+{
+    "name": "booking-engine",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "nodemon server"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/adityapotdar11/booking-engine.git"
+    },
+    "author": "Aditya Potdar",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/adityapotdar11/booking-engine/issues"
+    },
+    "homepage": "https://github.com/adityapotdar11/booking-engine#readme",
+    "dependencies": {
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "joi": "^17.11.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.0.0",
+        "nodemon": "^3.0.1"
+    }
+}
