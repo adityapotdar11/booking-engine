@@ -105,7 +105,7 @@ const updateTour = async (req, res) => {
             useFindAndModify: false,
         });
 
-        return res.status(201).json({
+        return res.status(200).json({
             status: true,
             message: "Tour updated successfully!",
         });
