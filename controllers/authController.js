@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
+const TempUser = require("../models/TempUser");
 const { jwtSecret } = require("../config/config");
 
 const registerUser = async (req, res) => {
@@ -75,4 +77,78 @@ const loginUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        let user = await User.findOne({ email });
+        if (!user) {
+            throw new Error("User not found!");
+        }
+        const slug = uuidv4();
+        const payload = {
+            user: user.id,
+            slug,
+        };
+
+        const tempUser = new TempUser(payload);
+        await tempUser.save();
+
+        return res.status(200).json({
+            status: true,
+            message: "Link sent to mail",
+            data: {
+                url: "http://localhost:5000/api/auth/confirm-user/" + slug,
+            },
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 400).json({
+            status: false,
+            message: error.message || "Something went wrong!",
+        });
+    }
+};
+
+const confirmUser = async (req, res) => {
+    try {
+        const tempUser = await TempUser.findOne({
+            slug: req.params.slug,
+        }).populate("user");
+        if (!tempUser) {
+            throw new Error("User not found!");
+        }
+        const currDate = new Date();
+        const createdDate = new Date(tempUser.createdAt);
+        const diffTime = Math.abs(currDate - createdDate);
+        const diffSec = Math.ceil(diffTime / 1000);
+        if (diffSec > 600) {
+            throw new Error("Link expired!");
+        }
+
+        const { password } = req.body;
+
+        const salt = await bcrypt.genSalt(10);
+
+        const hash = await bcrypt.hash(password, salt);
+
+        const payload = {
+            password: hash,
+        };
+
+        await User.findByIdAndUpdate(tempUser.user.id, payload, {
+            useFindAndModify: false,
+        });
+
+        return res.status(200).json({
+            status: true,
+            message: "Password updated successfully!",
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 400).json({
+            status: false,
+            message: error.message || "Something went wrong!",
+        });
+    }
+};
+
+module.exports = { registerUser, loginUser, forgotPassword, confirmUser };

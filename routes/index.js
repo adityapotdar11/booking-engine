@@ -8,9 +8,8 @@ const reviewRoutes = require("./reviewRoutes");
 const router = express.Router();
 
 router.use("/auth", authRoutes);
-router.use(authMiddleware);
-router.use("/tours", tourRoutes);
-router.use("/booking", bookingRoutes);
-router.use("/reviews", reviewRoutes);
+router.use("/tours", authMiddleware, tourRoutes);
+router.use("/booking", authMiddleware, bookingRoutes);
+router.use("/reviews", authMiddleware, reviewRoutes);
 
 module.exports = router;
