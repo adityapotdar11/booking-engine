@@ -42,7 +42,9 @@ const getAllReviews = async (req, res) => {
                 message: "Tour not found!",
             });
         }
-        const reviews = await Review.find({ tour: new ObjectId(tour._id) });
+        const reviews = await Review.find({
+            tour: new ObjectId(tour._id),
+        }).populate({ path: "user", select: "firstName lastName" });
         return res.status(200).json({
             status: true,
             message: "Reviews fetched successfully!",
@@ -108,4 +110,36 @@ const updateReview = async (req, res) => {
     }
 };
 
-module.exports = { createReview, getAllReviews, getSingleReview, updateReview };
+const deleteReview = async (req, res) => {
+    try {
+        let reviewObj = await Review.findById(req.params.id).populate("user");
+
+        if (!reviewObj) {
+            throw new Error("Review not Found!");
+        }
+
+        if (req.user.id != reviewObj.user.id) {
+            throw new Error("You cannot delete this review!");
+        }
+
+        await Review.findByIdAndDelete(reviewObj.id);
+
+        return res.status(200).json({
+            status: true,
+            message: "Review deleted successfully!",
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 400).json({
+            status: false,
+            message: error.message || "Something went wrong!",
+        });
+    }
+};
+
+module.exports = {
+    createReview,
+    getAllReviews,
+    getSingleReview,
+    updateReview,
+    deleteReview,
+};

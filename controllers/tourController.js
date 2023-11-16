@@ -1,4 +1,6 @@
 const Tour = require("../models/Tour");
+const Review = require("../models/Review");
+var ObjectId = require("mongoose").Types.ObjectId;
 const { v4: uuidv4 } = require("uuid");
 
 const createTour = async (req, res) => {
@@ -117,4 +119,34 @@ const updateTour = async (req, res) => {
     }
 };
 
-module.exports = { createTour, viewAllTours, viewTour, updateTour };
+const deleteTour = async (req, res) => {
+    try {
+        let tour = await Tour.findOne({
+            _id: req.params.id,
+        }).populate("user");
+
+        if (!tour) {
+            throw new Error("Tour not found!");
+        }
+
+        if (tour.user.id !== req.user.id) {
+            throw new Error("You cannot delete this tour!");
+        }
+
+        await Review.deleteMany({ tour: new ObjectId(tour._id) });
+
+        await Tour.findByIdAndDelete(tour.id);
+
+        return res.status(200).json({
+            status: true,
+            message: "Tour deleted successfully!",
+        });
+    } catch (error) {
+        return res.status(error.statusCode || 400).json({
+            status: false,
+            message: error.message || "Something went wrong!",
+        });
+    }
+};
+
+module.exports = { createTour, viewAllTours, viewTour, updateTour, deleteTour };
