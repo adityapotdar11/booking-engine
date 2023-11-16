@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.use("/auth", authRoutes);
 router.use("/tours", authMiddleware, tourRoutes);
-router.use("/booking", authMiddleware, bookingRoutes);
+router.use("/bookings", authMiddleware, bookingRoutes);
 router.use("/reviews", authMiddleware, reviewRoutes);
 
 module.exports = router;
