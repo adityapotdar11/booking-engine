@@ -1,6 +1,9 @@
-const BookingDetails = require("../models/BookingDetails");
-const stripe = require("stripe")("sk_test_PoYnFX3hEP3vXKuNdTTU34nH");
+const config = require("../config/config");
+const stripe = require("stripe")(config.stripeSecret);
+var ObjectId = require("mongoose").Types.ObjectId;
 const Tour = require("../models/Tour");
+const BookingDetails = require("../models/BookingDetails");
+
 const bookTour = async (req, res) => {
     try {
         const { tourId, paymentMethod } = req.body;
@@ -13,6 +16,15 @@ const bookTour = async (req, res) => {
 
         if (req.user.id === tour.user.id) {
             throw new Error("You cannot book your own tour!");
+        }
+
+        let bookingDetails = await BookingDetails.findOne({
+            tour: new ObjectId(tourId),
+            user: new ObjectId(req.user.id),
+        });
+
+        if (bookingDetails) {
+            throw new Error("You have already booked this tour!");
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
@@ -39,7 +51,7 @@ const bookTour = async (req, res) => {
                 paymentId: paymentConfirm.id,
             };
 
-            const bookingDetails = new BookingDetails(payload);
+            bookingDetails = new BookingDetails(payload);
 
             await bookingDetails.save();
 

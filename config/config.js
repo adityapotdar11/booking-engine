@@ -4,4 +4,5 @@ dotenv.config();
 module.exports = {
     databaseURL: process.env.DATABASE_URL,
     jwtSecret: process.env.JWT_SECRET,
+    stripeSecret: process.env.STRIPE_SECRET,
 };

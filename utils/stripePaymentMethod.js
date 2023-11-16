@@ -1,4 +1,6 @@
-const stripe = require("stripe")("sk_test_PoYnFX3hEP3vXKuNdTTU34nH");
+const config = require("../config/config");
+const stripe = require("stripe")(config.jwtSecret);
+
 const createPM = async () => {
     const paymentMethod = await stripe.paymentMethods.create({
         type: "card",
