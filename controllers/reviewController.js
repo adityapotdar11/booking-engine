@@ -9,7 +9,13 @@ const createReview = async (req, res) => {
         if (parseInt(rating) > 5 || parseInt(rating) === 0) {
             throw new Error("Invalid rating!");
         }
-
+        const tourObj = await Tour.findById(tour);
+        if (!tourObj) {
+            return res.status(400).json({
+                status: true,
+                message: "Tour not found!",
+            });
+        }
         const payload = {
             tour,
             review,
@@ -20,6 +26,26 @@ const createReview = async (req, res) => {
         let reviewObj = new Review(payload);
 
         await reviewObj.save();
+
+        const reviews = await Review.find({
+            tour: new ObjectId(tourObj.id),
+        });
+
+        let count = 0;
+        let ratings = 0;
+
+        if (reviews.length) {
+            await reviews.map((value) => {
+                ratings += Number(value.rating);
+                count++;
+            });
+            const payload = {
+                ratingsAverage: (ratings / count).toFixed(2),
+            };
+            await Tour.findByIdAndUpdate(tour, payload, {
+                useFindAndModify: false,
+            });
+        }
 
         return res.status(201).json({
             status: true,
@@ -82,7 +108,10 @@ const updateReview = async (req, res) => {
             throw new Error("Invalid rating!");
         }
 
-        let reviewObj = await Review.findById(req.params.id).populate("user");
+        let reviewObj = await Review.findById(req.params.id).populate(
+            "user",
+            "tour"
+        );
         if (!reviewObj) {
             throw new Error("Review not Found!");
         }
@@ -98,11 +127,32 @@ const updateReview = async (req, res) => {
             useFindAndModify: false,
         });
 
+        const reviews = await Review.find({
+            tour: new ObjectId(reviewObj.tour._id),
+        });
+
+        let count = 0;
+        let ratings = 0;
+
+        if (reviews.length) {
+            await reviews.map((value) => {
+                ratings += Number(value.rating);
+                count++;
+            });
+            const payload = {
+                ratingsAverage: (ratings / count).toFixed(2),
+            };
+            await Tour.findByIdAndUpdate(reviewObj.tour._id, payload, {
+                useFindAndModify: false,
+            });
+        }
+
         return res.status(200).json({
             status: true,
             message: "Review updated successfully!",
         });
     } catch (error) {
+        console.log(error);
         return res.status(error.statusCode || 400).json({
             status: false,
             message: error.message || "Something went wrong!",
@@ -112,7 +162,10 @@ const updateReview = async (req, res) => {
 
 const deleteReview = async (req, res) => {
     try {
-        let reviewObj = await Review.findById(req.params.id).populate("user");
+        let reviewObj = await Review.findById(req.params.id).populate(
+            "user",
+            "tour"
+        );
 
         if (!reviewObj) {
             throw new Error("Review not Found!");
@@ -123,6 +176,26 @@ const deleteReview = async (req, res) => {
         }
 
         await Review.findByIdAndDelete(reviewObj.id);
+
+        const reviews = await Review.find({
+            tour: new ObjectId(reviewObj.tour._id),
+        });
+
+        let count = 0;
+        let ratings = 0;
+
+        if (reviews.length) {
+            await reviews.map((value) => {
+                ratings += Number(value.rating);
+                count++;
+            });
+            const payload = {
+                ratingsAverage: (ratings / count).toFixed(2),
+            };
+            await Tour.findByIdAndUpdate(reviewObj.tour._id, payload, {
+                useFindAndModify: false,
+            });
+        }
 
         return res.status(200).json({
             status: true,
